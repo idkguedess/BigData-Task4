@@ -78,3 +78,4 @@ if __name__ == "__main__":
     start = time.time()
     result = distributed_block_mm(n, m, p, block_size)
     print(f"Computed {len(result)} blocks in {time.time() - start:.2f}s")
+    print("Timings:", result[1])
