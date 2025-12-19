@@ -29,3 +29,13 @@ def add_blocks(A, B):
     for i in range(size):
         for j in range(size):
             A[i][j] += B[i][j]
+
+def assemble_matrix(blocks, block_size, n, p):
+    C = [[0.0 for _ in range(p)] for _ in range(n)]
+
+    for bi, bj, block in blocks:
+        for i in range(len(block)):
+            for j in range(len(block[0])):
+                C[bi * block_size + i][bj * block_size + j] = block[i][j]
+
+    return C
