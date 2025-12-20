@@ -1,9 +1,9 @@
 from multiprocessing import Pool, cpu_count
 from matrix_generator import generate_matrix
-from block_utils import assemble_matrix, split_into_blocks
+from block_utils import split_into_blocks
 from mapper import mapper
 from reducer import reducer
-from utils import naive_mm, shuffle
+from utils import shuffle, write_csv_row
 import time
 
 def distributed_block_mm(n, m, p, block_size, workers=None):
@@ -50,32 +50,36 @@ def distributed_block_mm(n, m, p, block_size, workers=None):
 
     return results, timings
 
-def test_correctness(n, block_size):
-    A = generate_matrix(n, n)
-    B = generate_matrix(n, n)
-
-    distributed_blocks = distributed_block_mm(
-        n, n, n, block_size
+def run_experiment(n, block_size, workers):
+    results, timings = distributed_block_mm(
+        n, n, n, block_size, workers
     )
 
-    C_dist = assemble_matrix(
-        distributed_blocks, block_size, n, n
-    )
-    C_naive = naive_mm(A, B)
+    csv_header = [
+        "language", "matrix_size", "block_size", "workers",
+        "generation", "blocking", "map", "map_shuffle", "reduce", "total"
+    ]
 
-    for i in range(n):
-        for j in range(n):
-            if abs(C_dist[i][j] - C_naive[i][j]) > 1e-6:
-                print("Incorrect result")
-                return
+    csv_row = [
+        "python", n, block_size, workers,
+        f"{timings['generation']:.6f}",
+        f"{timings['blocking']:.6f}",
+        f"{timings['map']:.6f}",
+        f"{timings['shuffle']:.6f}",
+        f"{timings['reduce']:.6f}",
+        f"{timings['total']:.6f}"
+    ]
 
-    print("Correctness verified")
+    write_csv_row("benchmarks/results.csv", csv_header, csv_row)
+    print(f"Experiment completed. Results written to benchmarks/results.csv")
+
+
 
 if __name__ == "__main__":
-    n = m = p = 512
-    block_size = 64
-
-    start = time.time()
-    result = distributed_block_mm(n, m, p, block_size)
-    print(f"Computed {len(result)} blocks in {time.time() - start:.2f}s")
-    print("Timings:", result[1])
+    for n in [256, 512, 1024]:
+        for block_size in [16, 32, 64]:
+            run_experiment(
+                n=n,
+                block_size=block_size,
+                workers=cpu_count()
+            )

@@ -1,4 +1,6 @@
 from collections import defaultdict
+import csv
+import os
 
 def shuffle(mapped_data):
     grouped = defaultdict(list)
@@ -6,17 +8,11 @@ def shuffle(mapped_data):
         grouped[key].append(value)
     return grouped
 
-def naive_mm(A, B):
-    n = len(A)
-    m = len(B)
-    p = len(B[0])
+def write_csv_row(filepath, header, row):
+    file_exists = os.path.isfile(filepath)
 
-    C = [[0.0 for _ in range(p)] for _ in range(n)]
-
-    for i in range(n):
-        for k in range(m):
-            for j in range(p):
-                C[i][j] += A[i][k] * B[k][j]
-
-    return C
-
+    with open(filepath, "a", newline="") as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(header)
+        writer.writerow(row)
